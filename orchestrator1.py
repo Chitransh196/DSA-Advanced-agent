@@ -1,12 +1,12 @@
 from llm_client import call_llm
-from code_executor import run_code
-from problem_recommender import recommend_problem
-from retriever import retrieve_context
-from conversation_memory import save_memory, get_memory
+from code_executor1 import run_code
+from problem_recommender1 import recommend_problem
+from retriever1 import retrieve_context
+from conversation_memory1 import save_memory, get_memory
 
 # ✅ NEW IMPORTS
 import streamlit as st
-from pattern_detector import detect_pattern
+from pattern_detector1 import detect_pattern
 from hint_engine import get_hint_prompt
 
 

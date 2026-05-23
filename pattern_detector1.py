@@ -1,5 +1,5 @@
 from llm_client import call_llm
-from retriever import retrieve_context
+from retriever1 import retrieve_context
 
 
 def detect_pattern(question):
