@@ -1,85 +1,77 @@
-# # import os
-
-# # def retrieve_context(query: str) -> str:
-# #     try:
-# #         BASE_DIR = os.path.dirname(__file__)
-# #         file_path = os.path.join(BASE_DIR, "dsa_patterns_knowledge_base.txt")
-
-# #         with open(file_path, "r", encoding="utf-8") as f:
-# #             return f.read()
-
-# #     except Exception as e:
-# #         return f"Error loading knowledge base: {e}"
-
-# # import os
-
-
-# # def retrieve_context(query: str) -> str:
-# #     try:
-# #         # 🔍 Get absolute directory of this file
-# #         BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-
-# #         # 📂 Build full file path
-# #         file_path = os.path.join(BASE_DIR, "dsa_patterns_knowledge_base.txt")
-
-# #         # 🧪 Debug logs (helps in deployment)
-# #         print("BASE_DIR:", BASE_DIR)
-# #         print("Looking for file at:", file_path)
-
-# #         # ❌ If file missing
-# #         if not os.path.exists(file_path):
-# #             return "⚠️ Knowledge base file not found. Make sure 'dsa_patterns_knowledge_base.txt' is in the same folder."
-
-# #         # ✅ Read file
-# #         with open(file_path, "r", encoding="utf-8") as f:
-# #             content = f.read()
-
-# #         # ❗ Optional: return partial content (avoid huge prompts)
-# #         return content[:3000]
-
-# #     except Exception as e:
-# #         return f"❌ Error loading knowledge base: {str(e)}"
-
-# import os
-
-
-# def retrieve_context(query: str) -> str:
-#     try:
-#         # 🔍 Debug: show current working directory
-#         cwd = os.getcwd()
-#         files = os.listdir(cwd)
-
-#         print("CWD:", cwd)
-#         print("FILES:", files)
-
-#         file_path = os.path.join(cwd, "dsa_patterns_knowledge_base.txt")
-
-#         if not os.path.exists(file_path):
-#             return f"❌ File NOT found.\nCurrent dir: {cwd}\nFiles: {files}"
-
-#         with open(file_path, "r", encoding="utf-8") as f:
-#             return f.read()[:3000]
-
-#     except Exception as e:
-#         return f"❌ Error: {e}"
 import os
+from difflib import SequenceMatcher
+
+
+# ✅ CHUNKING
+def chunk_text(text, chunk_size=500):
+
+    chunks = []
+
+    for i in range(0, len(text), chunk_size):
+
+        chunks.append(text[i:i + chunk_size])
+
+    return chunks
+
+
+# ✅ SIMILARITY
+def similarity(a, b):
+
+    return SequenceMatcher(
+        None,
+        a.lower(),
+        b.lower()
+    ).ratio()
 
 
 def retrieve_context(query: str) -> str:
+
     try:
-        # ✅ Always correct path (file-based)
-        base_dir = os.path.dirname(os.path.abspath(__file__))
 
-        file_path = os.path.join(base_dir, "dsa_patterns_knowledge_base.txt")
+        # ✅ Always correct path
+        base_dir = os.path.dirname(
+            os.path.abspath(__file__)
+        )
 
-        print("BASE_DIR:", base_dir)
-        print("FILES:", os.listdir(base_dir))
+        file_path = os.path.join(
+            base_dir,
+            "dsa_patterns_knowledge_base.txt"
+        )
 
         if not os.path.exists(file_path):
+
             return f"❌ File NOT found in: {base_dir}"
 
-        with open(file_path, "r", encoding="utf-8") as f:
-            return f.read()[:3000]
+        with open(
+            file_path,
+            "r",
+            encoding="utf-8"
+        ) as f:
+
+            knowledge = f.read()
+
+        # ✅ CHUNKS
+        chunks = chunk_text(knowledge)
+
+        scored_chunks = []
+
+        for chunk in chunks:
+
+            score = similarity(query, chunk)
+
+            scored_chunks.append((score, chunk))
+
+        scored_chunks.sort(reverse=True)
+
+        # ✅ TOP CHUNKS
+        top_chunks = scored_chunks[:3]
+
+        context = "\n\n".join(
+            [chunk for _, chunk in top_chunks]
+        )
+
+        return context
 
     except Exception as e:
+
         return f"❌ Error: {e}"

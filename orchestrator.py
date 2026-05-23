@@ -1,80 +1,17 @@
-# from llm_client import call_llm
-# from code_executor import run_code
-# from problem_recommender import recommend_problem
-# from retriever import retrieve_context
-# from conversation_memory import save_memory, get_memory
-
-
-# def run_agent(user_input: str) -> str:
-#     text = user_input.lower()
-
-#     if "```" in user_input:
-#         return run_code(user_input)
-
-#     if "recommend" in text:
-#         return recommend_problem()
-
-#     memory = get_memory()
-#     history = "\n".join(
-#         [f"User: {m['user']}\nBot: {m['bot']}" for m in memory[-3:]]
-#     )
-
-#     context = retrieve_context(user_input)
-
-#     prompt = f"""
-# You are a helpful DSA tutor for beginners.
-
-# Previous conversation:
-# {history}
-
-# Reference context:
-# {context}
-
-# User question:
-# {user_input}
-
-# Instructions:
-# - Understand the user's intent using reasoning.
-# - Do not depend only on exact words from the reference context.
-# - If the question is ambiguous, say the possible interpretations first.
-# - If one interpretation matches a common coding interview problem, mention that clearly.
-# - Use the reference context only as support, not as the only source.
-# - Give a practical answer even if the exact pattern is not explicitly written in the context.
-# - If the question is about a simple operation, say that clearly.
-# - If the question can map to a known DSA pattern, explain that too.
-# - Keep the answer simple and beginner-friendly.
-# - Give full code when user asks.
-
-# Answer in this format:
-
-# Possible interpretation:
-# ...
-
-# Best pattern to use:
-# ...
-
-# Why:
-# ...
-
-# Hint:
-# ...
-
-# Time complexity target:
-# ...
-# """
-
-#     answer = call_llm(prompt)
-#     save_memory(user_input, answer)
-#     return answer
-
 from llm_client import call_llm
 from code_executor import run_code
 from problem_recommender import recommend_problem
 from retriever import retrieve_context
 from conversation_memory import save_memory, get_memory
 
+# ✅ NEW IMPORTS
+import streamlit as st
+from pattern_detector import detect_pattern
+from hint_engine import get_hint_prompt
+
 
 def detect_intent(user_input: str) -> str:
+
     text = user_input.lower()
 
     if "```" in user_input:
@@ -83,16 +20,50 @@ def detect_intent(user_input: str) -> str:
     if "recommend" in text:
         return "recommend"
 
-    if any(x in text for x in ["structure", "format", "pattern"]):
+    # ✅ START FLOW
+    if "go raiz" in text:
+        return "start"
+
+    # ✅ NEXT HINT
+    if any(x in text for x in [
+        "next hint",
+        "more hint",
+        "next",
+        "hint"
+    ]):
+        return "hint"
+
+    # ✅ SOLVED
+    if "solved" in text:
+        return "solved"
+
+    # ✅ FULL SOLUTION
+    if any(x in text for x in [
+        "show code",
+        "solution",
+        "give code"
+    ]):
+        return "solution"
+
+    if any(x in text for x in [
+        "structure",
+        "format",
+        "pattern"
+    ]):
         return "structured"
 
-    if any(x in text for x in ["hi", "hello", "hey"]):
+    if any(x in text for x in [
+        "hi",
+        "hello",
+        "hey"
+    ]):
         return "chat"
 
     return "normal"
 
 
 def run_agent(user_input: str) -> str:
+
     intent = detect_intent(user_input)
 
     # 🔧 TOOL: Run code
@@ -103,8 +74,184 @@ def run_agent(user_input: str) -> str:
     if intent == "recommend":
         return recommend_problem()
 
+    # ✅ START LEARNING FLOW
+    if intent == "start":
+
+        st.session_state.hint_level = 1
+
+        # ✅ UPLOADED QUESTIONS
+        if st.session_state.questions:
+
+            st.session_state.current_question = 0
+
+            question = st.session_state.questions[
+                st.session_state.current_question
+            ]
+
+        # ✅ MANUAL QUESTION
+        else:
+
+            question = user_input.replace(
+                "go raiz",
+                ""
+            ).strip()
+
+            if not question:
+
+                return """
+⚠️ No question found.
+
+Either:
+- upload PDF/TXT
+OR
+- paste question with Go Raiz
+"""
+
+            st.session_state.manual_question = question
+
+        pattern = detect_pattern(question)
+
+        st.session_state.current_pattern = pattern
+
+        prompt = get_hint_prompt(
+            question,
+            1
+        )
+
+        answer = call_llm(prompt)
+
+        return f"""
+# 🧩 Problem
+
+{question}
+
+---
+
+# 💡 Hint Level 1
+
+{answer}
+"""
+
+    # ✅ NEXT HINT
+    if intent == "hint":
+
+        # ✅ UPLOAD MODE
+        if st.session_state.questions:
+
+            question = st.session_state.questions[
+                st.session_state.current_question
+            ]
+
+        # ✅ MANUAL MODE
+        else:
+
+            question = st.session_state.manual_question
+
+        st.session_state.hint_level += 1
+
+        level = st.session_state.hint_level
+
+        if level > 5:
+
+            return """
+✅ All hints unlocked.
+
+Now ask:
+- show code
+- solution
+"""
+
+        prompt = get_hint_prompt(
+            question,
+            level
+        )
+
+        answer = call_llm(prompt)
+
+        return f"""
+# 💡 Hint Level {level}
+
+{answer}
+"""
+
+    # ✅ NEXT QUESTION
+    if intent == "solved":
+
+        st.session_state.current_question += 1
+
+        st.session_state.hint_level = 1
+
+        if (
+            st.session_state.current_question
+            >= len(st.session_state.questions)
+        ):
+
+            return "🎉 You solved all uploaded questions!"
+
+        question = st.session_state.questions[
+            st.session_state.current_question
+        ]
+
+        pattern = detect_pattern(question)
+
+        st.session_state.current_pattern = pattern
+
+        prompt = get_hint_prompt(
+            question,
+            1
+        )
+
+        answer = call_llm(prompt)
+
+        return f"""
+# ✅ Next Problem
+
+{question}
+
+---
+
+# 💡 Hint Level 1
+
+{answer}
+"""
+
+    # ✅ FULL SOLUTION
+    if intent == "solution":
+
+        # ✅ UPLOAD MODE
+        if st.session_state.questions:
+
+            question = st.session_state.questions[
+                st.session_state.current_question
+            ]
+
+        # ✅ MANUAL MODE
+        else:
+
+            question = st.session_state.manual_question
+
+        context = retrieve_context(question)
+
+        prompt = f"""
+You are a DSA tutor.
+
+REFERENCE:
+{context}
+
+QUESTION:
+{question}
+
+Give:
+1. Optimized explanation
+2. Time complexity
+3. Python code
+"""
+
+        return call_llm(prompt)
+
     # 🧠 Memory
     memory = get_memory()
+
     history = "\n".join(
         [f"User: {m['user']}\nBot: {m['bot']}" for m in memory[-3:]]
     )
@@ -114,6 +261,7 @@ def run_agent(user_input: str) -> str:
 
     # 🧠 Dynamic Prompt
     if intent == "chat":
+
         prompt = f"""
 You are a friendly AI assistant.
 
@@ -127,6 +275,7 @@ Respond naturally like ChatGPT.
 """
 
     elif intent == "structured":
+
         prompt = f"""
 You are a DSA tutor.
 
@@ -157,7 +306,8 @@ Time complexity target:
 ...
 """
 
-    else:  # normal mode
+    else:
+
         prompt = f"""
 You are a helpful DSA tutor.
 
@@ -176,9 +326,11 @@ Instructions:
 - Give examples if needed.
 - Give code ONLY if user asks.
 
-Answer naturally (not forced format).
+Answer naturally.
 """
 
     answer = call_llm(prompt)
+
     save_memory(user_input, answer)
+
     return answer
