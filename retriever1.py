@@ -35,7 +35,7 @@ def retrieve_context(query: str) -> str:
 
         file_path = os.path.join(
             base_dir,
-            "dsa_patterns_knowledge_base.txt"
+            "dsa_patterns_knowledge_base1.txt"
         )
 
         if not os.path.exists(file_path):
