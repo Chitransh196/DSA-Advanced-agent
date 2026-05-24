@@ -1,0 +1,1302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Raiz — DSA AI Mentor</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Exo+2:wght@300;400;500;600;700;800;900&family=IBM+Plex+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
+
+*,*::before,*::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg0: #020810;
+  --bg1: #060e1d;
+  --bg2: #0a1628;
+  --bg3: #0f1f3a;
+  --bg4: #152848;
+  --bg5: #1c3460;
+  --royal:   #1a56db;
+  --royal-b: #1040b0;
+  --royal-l: #3a7aff;
+  --royal-ll:#6aa0ff;
+  --silver:  #c8d6ee;
+  --silver-m:#8aa4cc;
+  --silver-d:#5474a0;
+  --silver-dd:#2e4872;
+  --accent:  #60a5fa;
+  --gold:    #f0b429;
+  --success: #10d48a;
+  --danger:  #f04060;
+  --font-display: 'Exo 2', sans-serif;
+  --font-body:    'IBM Plex Sans', sans-serif;
+  --font-mono:    'JetBrains Mono', monospace;
+}
+
+html, body {
+  height: 100%;
+  background: var(--bg0);
+  color: var(--silver);
+  font-family: var(--font-body);
+  overflow: hidden;
+}
+
+/* ─────────────── SCROLLBAR ─────────────── */
+::-webkit-scrollbar { width: 3px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--royal-b); border-radius: 2px; }
+
+/* ─────────────── ANIMATIONS ─────────────── */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes dot {
+  0%,80%,100% { transform: scale(0.5); opacity: 0.3; }
+  40%          { transform: scale(1.1); opacity: 1; }
+}
+@keyframes scanline {
+  0%   { top: -2px; }
+  100% { top: 100%; }
+}
+@keyframes hintGlow {
+  0%,100% { box-shadow: 0 0 4px rgba(58,122,255,0.4); }
+  50%      { box-shadow: 0 0 12px rgba(58,122,255,0.9); }
+}
+@keyframes pulseRing {
+  0%   { box-shadow: 0 0 0 0 rgba(26,86,219,0.5); }
+  70%  { box-shadow: 0 0 0 8px rgba(26,86,219,0); }
+  100% { box-shadow: 0 0 0 0 rgba(26,86,219,0); }
+}
+
+/* ─────────────── LAYOUT ─────────────── */
+#app {
+  display: flex;
+  height: 100vh;
+  position: relative;
+  overflow: hidden;
+}
+
+/* ─────────────── SIDEBAR ─────────────── */
+#sidebar {
+  width: 260px;
+  flex-shrink: 0;
+  background: var(--bg1);
+  border-right: 1px solid var(--bg4);
+  display: flex;
+  flex-direction: column;
+  transition: width 0.25s ease, opacity 0.25s ease;
+  overflow: hidden;
+  position: relative;
+}
+#sidebar::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--royal-l), transparent);
+  opacity: 0.6;
+}
+#sidebar.collapsed {
+  width: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Brand */
+.brand {
+  padding: 22px 18px 16px;
+  border-bottom: 1px solid var(--bg4);
+  position: relative;
+}
+.brand-logo {
+  font-family: var(--font-display);
+  font-size: 32px;
+  font-weight: 900;
+  letter-spacing: 4px;
+  color: #fff;
+  line-height: 1;
+  text-shadow: 0 0 30px rgba(58,122,255,0.3);
+}
+.brand-logo span { color: var(--royal-l); }
+.brand-sub {
+  font-size: 9px;
+  color: var(--silver-d);
+  letter-spacing: 3px;
+  margin-top: 4px;
+  text-transform: uppercase;
+}
+.brand-dot {
+  position: absolute;
+  top: 22px; right: 18px;
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--success);
+  animation: pulseRing 2s ease-out infinite;
+}
+
+/* Sidebar section */
+.sb-section {
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--bg4);
+}
+.sb-label {
+  font-size: 9px;
+  color: var(--silver-d);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+.stat-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+.stat-label {
+  font-size: 12px;
+  color: var(--silver-m);
+}
+
+/* Hint dots */
+.hint-dots { display: flex; gap: 5px; align-items: center; }
+.hdot {
+  width: 9px; height: 9px;
+  border-radius: 50%;
+  transition: all 0.3s ease;
+  border: 1px solid var(--bg4);
+  cursor: default;
+}
+.hdot.on {
+  background: var(--royal-l);
+  border-color: var(--royal);
+  animation: hintGlow 2s ease-in-out infinite;
+}
+.hdot.off { background: var(--bg3); }
+.hint-num {
+  font-size: 10px;
+  font-family: var(--font-mono);
+  color: var(--silver-dd);
+  margin-left: 4px;
+}
+
+/* Pattern badge */
+.pattern-badge {
+  background: var(--bg3);
+  border: 1px solid rgba(26,86,219,0.4);
+  border-radius: 6px;
+  padding: 7px 10px;
+  font-size: 11px;
+  font-family: var(--font-mono);
+  color: var(--royal-ll);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+}
+.pattern-badge::before { content: "◈"; color: var(--royal-l); }
+
+/* Question list */
+.q-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 10px 0;
+}
+.q-item {
+  padding: 9px 18px;
+  cursor: pointer;
+  border-left: 2px solid transparent;
+  transition: all 0.15s ease;
+}
+.q-item:hover { background: var(--bg2); color: var(--silver); }
+.q-item.active {
+  background: var(--bg3);
+  border-left-color: var(--royal-l);
+  color: #fff;
+}
+.q-num {
+  font-size: 9px;
+  font-family: var(--font-mono);
+  color: var(--royal-ll);
+  margin-bottom: 2px;
+}
+.q-text {
+  font-size: 11px;
+  color: inherit;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Sidebar actions */
+.sb-actions {
+  padding: 14px 18px;
+  border-top: 1px solid var(--bg4);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.sb-btn {
+  background: var(--bg2);
+  border: 1px solid var(--bg4);
+  border-radius: 8px;
+  padding: 9px 12px;
+  color: var(--silver-m);
+  cursor: pointer;
+  font-size: 12px;
+  font-family: var(--font-body);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s;
+  text-align: left;
+  width: 100%;
+}
+.sb-btn:hover {
+  background: var(--bg3);
+  border-color: var(--silver-dd);
+  color: var(--silver);
+}
+.sb-btn.danger:hover {
+  border-color: var(--danger);
+  color: var(--danger);
+}
+
+/* ─────────────── MAIN ─────────────── */
+#main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-width: 0;
+  position: relative;
+}
+
+/* Top bar */
+#topbar {
+  padding: 13px 20px;
+  background: var(--bg1);
+  border-bottom: 1px solid var(--bg4);
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-shrink: 0;
+  position: relative;
+}
+#topbar::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(26,86,219,0.3), transparent);
+}
+#menu-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--silver-m);
+  font-size: 20px;
+  padding: 4px 6px;
+  border-radius: 6px;
+  transition: color 0.2s, background 0.2s;
+  line-height: 1;
+  flex-shrink: 0;
+}
+#menu-btn:hover { color: var(--silver); background: var(--bg3); }
+
+.topbar-info { flex: 1; min-width: 0; }
+.topbar-title {
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 700;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.topbar-sub {
+  font-size: 11px;
+  color: var(--silver-d);
+  margin-top: 2px;
+}
+
+.progress-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+.progress-bar {
+  width: 88px;
+  height: 3px;
+  background: var(--bg4);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--royal), var(--royal-l));
+  border-radius: 2px;
+  transition: width 0.5s ease;
+}
+.progress-text {
+  font-size: 10px;
+  font-family: var(--font-mono);
+  color: var(--silver-d);
+}
+
+/* ─────────────── MESSAGES ─────────────── */
+#messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px 24px 10px;
+  display: flex;
+  flex-direction: column;
+}
+
+.msg-wrap {
+  display: flex;
+  margin-bottom: 20px;
+  animation: fadeUp 0.3s ease-out;
+}
+.msg-wrap.user { flex-direction: row-reverse; }
+
+.avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 13px;
+}
+.avatar.bot {
+  background: linear-gradient(135deg, var(--royal-b), var(--royal-l));
+  color: #fff;
+  margin-right: 10px;
+  margin-top: 2px;
+  box-shadow: 0 0 14px rgba(26,86,219,0.45);
+}
+.avatar.user {
+  background: var(--bg3);
+  border: 1px solid var(--bg5);
+  color: var(--silver-m);
+  margin-left: 10px;
+  margin-top: 2px;
+}
+
+.bubble {
+  max-width: 74%;
+  padding: 12px 16px;
+  font-size: 13.5px;
+  line-height: 1.68;
+  word-break: break-word;
+}
+.bubble.bot {
+  background: var(--bg2);
+  border: 1px solid var(--bg4);
+  border-radius: 4px 16px 16px 16px;
+  color: var(--silver);
+}
+.bubble.user {
+  background: linear-gradient(135deg, rgba(16,64,176,0.82), rgba(26,86,219,0.82));
+  border: 1px solid rgba(106,160,255,0.18);
+  border-radius: 16px 4px 16px 16px;
+  color: var(--silver);
+}
+.msg-time {
+  font-size: 10px;
+  color: var(--silver-dd);
+  margin-top: 6px;
+  text-align: right;
+}
+
+/* Markdown inside bubble */
+.bubble strong { color: #fff; font-weight: 600; }
+.bubble em { color: var(--silver-m); font-style: italic; }
+.bubble code {
+  font-family: var(--font-mono);
+  background: rgba(26,86,219,0.18);
+  padding: 1px 6px;
+  border-radius: 3px;
+  font-size: 0.83em;
+  color: var(--royal-ll);
+}
+.bubble pre {
+  background: var(--bg0);
+  border: 1px solid var(--bg4);
+  border-radius: 8px;
+  padding: 14px;
+  margin: 10px 0;
+  overflow-x: auto;
+  position: relative;
+}
+.bubble pre::before {
+  content: attr(data-lang);
+  position: absolute;
+  top: 6px; right: 10px;
+  font-size: 9px;
+  font-family: var(--font-mono);
+  color: var(--silver-dd);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+.bubble pre code {
+  background: none;
+  padding: 0;
+  font-size: 0.81em;
+  color: var(--silver);
+  display: block;
+  white-space: pre;
+}
+.bubble h3 {
+  font-family: var(--font-display);
+  font-size: 0.95em;
+  font-weight: 700;
+  color: var(--accent);
+  margin: 12px 0 5px;
+}
+.bubble h3:first-child { margin-top: 0; }
+.bubble h4 {
+  font-family: var(--font-display);
+  font-size: 0.88em;
+  font-weight: 600;
+  color: var(--silver-m);
+  margin: 10px 0 4px;
+}
+.bubble .arrow-item {
+  display: flex;
+  gap: 8px;
+  margin: 4px 0;
+  align-items: flex-start;
+}
+.bubble .arrow-item::before {
+  content: "▸";
+  color: var(--royal-l);
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+.bubble hr {
+  border: none;
+  border-top: 1px solid var(--bg4);
+  margin: 12px 0;
+}
+
+/* Typing indicator */
+.typing-wrap { display: flex; margin-bottom: 20px; align-items: flex-start; }
+.typing-bubble {
+  background: var(--bg2);
+  border: 1px solid var(--bg4);
+  border-radius: 4px 16px 16px 16px;
+  padding: 14px 18px;
+  display: flex;
+  gap: 5px;
+  align-items: center;
+}
+.tdot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--royal-l);
+  animation: dot 1.2s ease-in-out infinite;
+}
+.tdot:nth-child(2) { animation-delay: 0.15s; }
+.tdot:nth-child(3) { animation-delay: 0.30s; }
+
+/* ─────────────── QUICK ACTIONS ─────────────── */
+#quick-bar {
+  padding: 10px 24px 0;
+  display: flex;
+  gap: 7px;
+  flex-wrap: wrap;
+  background: var(--bg1);
+  border-top: 1px solid var(--bg4);
+  flex-shrink: 0;
+}
+.qa-btn {
+  background: var(--bg2);
+  border: 1px solid var(--bg4);
+  border-radius: 20px;
+  padding: 5px 14px;
+  color: var(--silver-m);
+  cursor: pointer;
+  font-size: 11.5px;
+  font-family: var(--font-body);
+  transition: all 0.15s ease;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.qa-btn:hover {
+  background: var(--bg3);
+  border-color: var(--royal-b);
+  color: var(--silver);
+}
+.qa-btn:active { transform: scale(0.96); }
+
+/* ─────────────── INPUT BAR ─────────────── */
+#input-bar {
+  padding: 12px 24px 18px;
+  background: var(--bg1);
+  display: flex;
+  gap: 10px;
+  align-items: flex-end;
+  flex-shrink: 0;
+}
+#chat-input {
+  flex: 1;
+  background: var(--bg2);
+  border: 1px solid var(--bg4);
+  border-radius: 14px;
+  padding: 12px 16px;
+  color: #fff;
+  font-family: var(--font-body);
+  font-size: 13.5px;
+  resize: none;
+  outline: none;
+  line-height: 1.55;
+  min-height: 46px;
+  max-height: 130px;
+  transition: border-color 0.2s;
+}
+#chat-input::placeholder { color: var(--silver-dd); }
+#chat-input:focus { border-color: var(--royal-b); }
+
+#send-btn {
+  width: 46px;
+  height: 46px;
+  border-radius: 13px;
+  flex-shrink: 0;
+  background: linear-gradient(135deg, var(--royal-b), var(--royal-l));
+  border: none;
+  cursor: pointer;
+  color: #fff;
+  font-size: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  box-shadow: 0 0 16px rgba(26,86,219,0.35);
+}
+#send-btn:disabled {
+  background: var(--bg3);
+  cursor: not-allowed;
+  box-shadow: none;
+  opacity: 0.5;
+}
+#send-btn:not(:disabled):hover {
+  box-shadow: 0 0 24px rgba(26,86,219,0.6);
+  transform: scale(1.04);
+}
+#send-btn:not(:disabled):active { transform: scale(0.97); }
+
+/* ─────────────── WATERMARK GRID ─────────────── */
+#grid-bg {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: -1;
+  background-image:
+    linear-gradient(rgba(26,86,219,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(26,86,219,0.03) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+</style>
+</head>
+<body>
+
+<div id="grid-bg"></div>
+
+<div id="app">
+
+  <!-- ═══════════ SIDEBAR ═══════════ -->
+  <div id="sidebar">
+
+    <div class="brand">
+      <div class="brand-dot"></div>
+      <div class="brand-logo"><span>R</span>AIZ</div>
+      <div class="brand-sub">DSA AI Mentor</div>
+    </div>
+
+    <div class="sb-section">
+      <div class="sb-label">Session</div>
+
+      <div class="stat-row">
+        <span class="stat-label">Hint Level</span>
+        <div class="hint-dots">
+          <div class="hdot off" id="d1"></div>
+          <div class="hdot off" id="d2"></div>
+          <div class="hdot off" id="d3"></div>
+          <div class="hdot off" id="d4"></div>
+          <div class="hdot off" id="d5"></div>
+          <span class="hint-num" id="hint-num">0/5</span>
+        </div>
+      </div>
+
+      <div class="stat-row" id="prog-row" style="display:none">
+        <span class="stat-label">Progress</span>
+        <span style="font-size:12px;font-family:var(--font-mono);color:var(--royal-ll)" id="sb-prog"></span>
+      </div>
+
+      <div class="pattern-badge" id="pattern-badge" style="display:none"></div>
+    </div>
+
+    <div class="q-list" id="q-list"></div>
+
+    <div class="sb-actions">
+      <button class="sb-btn" id="upload-btn">
+        <span>↑</span> Upload Questions (.txt)
+      </button>
+      <input type="file" id="file-inp" accept=".txt" style="display:none">
+
+      <button class="sb-btn danger" id="clear-btn">
+        <span>⊘</span> Clear Memory
+      </button>
+    </div>
+
+  </div><!-- /sidebar -->
+
+  <!-- ═══════════ MAIN ═══════════ -->
+  <div id="main">
+
+    <!-- Top bar -->
+    <div id="topbar">
+      <button id="menu-btn">☰</button>
+
+      <div class="topbar-info">
+        <div class="topbar-title" id="topbar-title">Raiz AI Mentor</div>
+        <div class="topbar-sub"  id="topbar-sub">Ready — type "go raiz [problem]" to begin</div>
+      </div>
+
+      <div class="progress-wrap" id="prog-wrap" style="display:none">
+        <div class="progress-bar">
+          <div class="progress-fill" id="prog-fill" style="width:0%"></div>
+        </div>
+        <span class="progress-text" id="prog-label">0/0</span>
+      </div>
+    </div>
+
+    <!-- Messages -->
+    <div id="messages">
+      <div class="msg-wrap">
+        <div class="avatar bot">R</div>
+        <div class="bubble bot">
+          <h3>Welcome to Raiz</h3>
+          Your intelligent DSA coaching agent. Here's how to use me:
+          <br><br>
+          <div class="arrow-item"><strong>go raiz [problem]</strong> — Start any DSA problem</div>
+          <div class="arrow-item"><strong>hint</strong> — Unlock next hint (level 1 → 5)</div>
+          <div class="arrow-item"><strong>solved</strong> — Mark done, advance to next question</div>
+          <div class="arrow-item"><strong>solution</strong> — Reveal the full optimised solution</div>
+          <div class="arrow-item"><strong>recommend</strong> — Get a random problem suggestion</div>
+          <div class="arrow-item">Submit <code>```python</code> code for review &amp; scoring</div>
+          <div class="arrow-item">Upload a <code>.txt</code> with numbered questions via sidebar</div>
+          <div class="msg-time" id="welcome-time"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick actions -->
+    <div id="quick-bar">
+      <button class="qa-btn" data-cmd="go raiz ">▶ Go Raiz</button>
+      <button class="qa-btn" data-cmd="hint">💡 Hint</button>
+      <button class="qa-btn" data-cmd="solution">📖 Solution</button>
+      <button class="qa-btn" data-cmd="solved">✓ Solved</button>
+      <button class="qa-btn" data-cmd="recommend">★ Recommend</button>
+      <button class="qa-btn" data-cmd="show code">⌨ Show Code</button>
+    </div>
+
+    <!-- Input -->
+    <div id="input-bar">
+      <textarea
+        id="chat-input"
+        rows="1"
+        placeholder='Ask anything, or type "go raiz [your problem]"...'
+      ></textarea>
+      <button id="send-btn" disabled>↑</button>
+    </div>
+
+  </div><!-- /main -->
+</div><!-- /app -->
+
+<script>
+const BACKEND_URL ="http://127.0.0.1:8000";
+
+// ══════════════════════════════════════════
+
+// ══════════════════════════════════════════
+//  STATE
+// ══════════════════════════════════════════
+const state = {
+  hintLevel:   0,
+  currentQ:    null,
+  questions:   [],
+  qIndex:      0,
+  pattern:     "",
+  loading:     false,
+};
+
+const PROBLEMS = [
+  "Two Sum", "Reverse Linked List", "Valid Parentheses",
+  "Merge Intervals", "Binary Search",
+  "Longest Substring Without Repeating Characters",
+  "Number of Islands", "Climbing Stairs",
+  "LRU Cache", "Word Break", "Coin Change",
+  "Maximum Subarray", "Meeting Rooms II",
+];
+
+// ══════════════════════════════════════════
+//  DOM REFS
+// ══════════════════════════════════════════
+const $msgs      = document.getElementById("messages");
+const $input     = document.getElementById("chat-input");
+const $send      = document.getElementById("send-btn");
+const $qlist     = document.getElementById("q-list");
+const $sidebar   = document.getElementById("sidebar");
+const $topTitle  = document.getElementById("topbar-title");
+const $topSub    = document.getElementById("topbar-sub");
+const $progRow   = document.getElementById("prog-row");
+const $sbProg    = document.getElementById("sb-prog");
+const $progWrap  = document.getElementById("prog-wrap");
+const $progFill  = document.getElementById("prog-fill");
+const $progLabel = document.getElementById("prog-label");
+const $patBadge  = document.getElementById("pattern-badge");
+
+document.getElementById("welcome-time").textContent = getTime();
+
+// ══════════════════════════════════════════
+//  UTILS
+// ══════════════════════════════════════════
+function getTime() {
+  return new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+}
+
+function detectIntent(txt) {
+  const t = txt.toLowerCase();
+  if (txt.includes("```"))                                        return "code";
+  if (t.includes("recommend"))                                   return "recommend";
+  if (t.includes("go raiz"))                                     return "start";
+  if (["next hint","more hint","hint"].some(x => t.includes(x))) return "hint";
+  if (t.includes("solved"))                                      return "solved";
+  if (["show code","solution","give code"].some(x => t.includes(x))) return "solution";
+  return "normal";
+}
+
+function extractQuestions(text) {
+  const parts = text.split(/\n\d+[.)]\s/);
+  return parts.map(q => q.trim()).filter(q => q.length > 30);
+}
+
+// ── Simple markdown → HTML ──
+function md(text) {
+  return text
+    // fenced code blocks
+    .replace(/```(\w*)\n([\s\S]*?)```/g, (_, lang, code) =>
+      `<pre data-lang="${lang||'code'}"><code>${code.replace(/</g,"&lt;").replace(/>/g,"&gt;")}</code></pre>`)
+    // bold / italic / inline code
+    .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
+    .replace(/\*(.*?)\*/g,     "<em>$1</em>")
+    .replace(/`([^`]+)`/g,     "<code>$1</code>")
+    // headings
+    .replace(/^# (.*)/gm,  "<h3>$1</h3>")
+    .replace(/^## (.*)/gm, "<h4>$1</h4>")
+    // hr
+    .replace(/^---$/gm, "<hr>")
+    // bullet items
+    .replace(/^[-*] (.*)/gm, '<div class="arrow-item">$1</div>')
+    // line breaks
+    .replace(/\n\n/g, "<br><br>")
+    .replace(/\n/g,   "<br>");
+}
+
+// ══════════════════════════════════════════
+//  RENDER HELPERS
+// ══════════════════════════════════════════
+function updateHintDots() {
+  for (let i = 1; i <= 5; i++) {
+    document.getElementById("d" + i).className =
+      "hdot " + (i <= state.hintLevel ? "on" : "off");
+  }
+  document.getElementById("hint-num").textContent = state.hintLevel + "/5";
+}
+
+function updateProgress() {
+  if (state.questions.length > 0) {
+    const pct = ((state.qIndex + 1) / state.questions.length * 100).toFixed(0);
+    $progRow.style.display  = "flex";
+    $sbProg.textContent     = (state.qIndex + 1) + "/" + state.questions.length;
+    $progWrap.style.display = "flex";
+    $progFill.style.width   = pct + "%";
+    $progLabel.textContent  = (state.qIndex + 1) + "/" + state.questions.length;
+  } else {
+    $progRow.style.display  = "none";
+    $progWrap.style.display = "none";
+  }
+}
+
+function updatePattern(p) {
+  state.pattern = p || "";
+  if (p) {
+    $patBadge.style.display = "flex";
+    $patBadge.textContent   = p;
+  } else {
+    $patBadge.style.display = "none";
+  }
+}
+
+function renderQList() {
+  $qlist.innerHTML = "";
+  state.questions.forEach((q, i) => {
+    const el = document.createElement("div");
+    el.className = "q-item" + (i === state.qIndex ? " active" : "");
+    el.innerHTML =
+      `<div class="q-num">#${i + 1}</div>` +
+      `<div class="q-text">${q.substring(0, 58)}…</div>`;
+    el.onclick = () => {
+      state.qIndex   = i;
+      state.currentQ = q;
+      state.hintLevel = 1;
+      updateHintDots();
+      renderQList();
+      updateProgress();
+      $input.value = "go raiz";
+      $send.disabled = false;
+      $input.focus();
+    };
+    $qlist.appendChild(el);
+  });
+}
+
+function addMsg(role, html, rawText) {
+  const isUser = role === "user";
+  const wrap   = document.createElement("div");
+  wrap.className = "msg-wrap" + (isUser ? " user" : "");
+
+  const av = document.createElement("div");
+  av.className = "avatar " + (isUser ? "user" : "bot");
+  av.textContent = isUser ? "U" : "R";
+
+  const bub = document.createElement("div");
+  bub.className = "bubble " + (isUser ? "user" : "bot");
+
+  if (isUser) {
+    bub.textContent = rawText || html;
+  } else {
+    bub.innerHTML = html;
+  }
+
+  const t = document.createElement("div");
+  t.className   = "msg-time";
+  t.textContent = getTime();
+  bub.appendChild(t);
+
+  if (isUser) {
+    wrap.appendChild(bub);
+    wrap.appendChild(av);
+  } else {
+    wrap.appendChild(av);
+    wrap.appendChild(bub);
+  }
+
+  $msgs.appendChild(wrap);
+  $msgs.scrollTop = $msgs.scrollHeight;
+}
+
+function showTyping() {
+  const el = document.createElement("div");
+  el.className = "typing-wrap";
+  el.id        = "typing-indicator";
+  el.innerHTML =
+    `<div class="avatar bot">R</div>` +
+    `<div class="typing-bubble">` +
+      `<div class="tdot"></div><div class="tdot"></div><div class="tdot"></div>` +
+    `</div>`;
+  $msgs.appendChild(el);
+  $msgs.scrollTop = $msgs.scrollHeight;
+}
+function hideTyping() {
+  const el = document.getElementById("typing-indicator");
+  if (el) el.remove();
+}
+
+// ══════════════════════════════════════════
+//  ANTHROPIC API
+// ══════════════════════════════════════════
+async function callAPI(
+  systemPrompt,
+  userMsg
+) {
+
+  const response = await fetch(
+
+    `${BACKEND_URL}/chat`,
+
+    {
+      method: "POST",
+
+      headers: {
+        "Content-Type":
+          "application/json"
+      },
+
+      body: JSON.stringify({
+
+        message: userMsg
+      })
+    }
+  );
+
+  const data = await response.json();
+
+  return data.response;
+}
+
+// ── Prompt builders (mirror hint_engine.py intent logic) ──
+const BASE_SYSTEM =
+  "You are Raiz, an elite DSA coaching AI. Use the Socratic method. " +
+  "Be precise, concise, and encouraging. Never give away the answer prematurely.";
+
+function buildPrompt(intent, hintLvl, question, userInput) {
+  if (intent === "start") {
+    return {
+      sys: BASE_SYSTEM,
+      usr:
+        `Identify the DSA pattern and give Hint Level 1 only.\n` +
+        `Hint Level 1 = conceptual nudge ONLY — do NOT name the algorithm or give pseudocode.\n\n` +
+        `Problem:\n${question}\n\n` +
+        `Respond in this exact format:\n` +
+        `**Pattern Detected:** [name]\n\n` +
+        `**Hint Level 1:** [2-3 sentences that guide thinking without revealing approach]`,
+    };
+  }
+
+  const hintInstructions = {
+    2: "Give a small directional hint. Mention the general approach but NOT the algorithm name.",
+    3: "Give a medium hint. Mention a useful data structure by name.",
+    4: "Give a strong approach hint. Describe the algorithm steps at a high level.",
+    5: "Give pseudocode only. NO full working code.",
+  };
+
+  if (intent === "hint") {
+    return {
+      sys: BASE_SYSTEM,
+      usr: `Problem:\n${question}\n\nHint Level ${hintLvl}: ${hintInstructions[hintLvl] || hintInstructions[5]}`,
+    };
+  }
+
+  if (intent === "solution") {
+    return {
+      sys: BASE_SYSTEM,
+      usr:
+        `Problem:\n${question}\n\n` +
+        `Provide:\n` +
+        `1. Optimal approach explanation\n` +
+        `2. Time & Space complexity analysis\n` +
+        `3. Clean Python solution with inline comments`,
+    };
+  }
+
+  if (intent === "code") {
+    return {
+      sys: BASE_SYSTEM,
+      usr:
+        `Review this code submission. Score it /10. List bugs, inefficiencies, and improvements.\n\n` +
+        `${userInput}`,
+    };
+  }
+
+  // normal / fallback
+  return {
+    sys: BASE_SYSTEM,
+    usr: `${userInput}\n\nAnswer as a concise DSA tutor.`,
+  };
+}
+
+// ══════════════════════════════════════════
+//  MAIN SEND HANDLER
+// ══════════════════════════════════════════
+async function handleSend() {
+  const txt = $input.value.trim();
+  if (!txt || state.loading) return;
+
+  $input.value = "";
+  $input.style.height = "";
+  $send.disabled = true;
+  state.loading  = true;
+
+  addMsg("user", null, txt);
+
+  const intent = detectIntent(txt);
+
+  // ── Recommend (no API) ──
+  if (intent === "recommend") {
+    const pick = PROBLEMS[Math.floor(Math.random() * PROBLEMS.length)];
+    addMsg(
+      "bot",
+      `<strong>Recommended Problem</strong><br><br>📌 <strong>${pick}</strong>` +
+      `<br><br>Type <code>go raiz ${pick}</code> to start!`
+    );
+    state.loading = false; $send.disabled = false; return;
+  }
+
+  let question      = state.currentQ;
+  let newHintLevel  = state.hintLevel;
+
+  // ── Start ──
+  if (intent === "start") {
+    newHintLevel    = 1;
+    state.hintLevel = 1;
+
+    if (state.questions.length > 0) {
+      question        = state.questions[state.qIndex];
+      state.currentQ  = question;
+    } else {
+      question = txt.replace(/go raiz/i, "").trim();
+      if (!question) {
+        addMsg("bot", "⚠️ No question found. Type <code>go raiz [your problem]</code> or upload a <code>.txt</code> file.");
+        state.loading = false; $send.disabled = false; return;
+      }
+      state.currentQ = question;
+    }
+
+    updateHintDots();
+    updatePattern("");
+    $topTitle.textContent = question.substring(0, 52) + (question.length > 52 ? "…" : "");
+    $topSub.textContent   = "Hint 1/5 · Detecting pattern…";
+  }
+
+  // ── Hint ──
+  if (intent === "hint") {
+    if (!state.currentQ) {
+      addMsg("bot", "⚠️ No active problem. Start one with <code>go raiz [problem]</code>.");
+      state.loading = false; $send.disabled = false; return;
+    }
+    if (state.hintLevel >= 5) {
+      addMsg("bot",
+        "✅ <strong>All 5 hints unlocked!</strong><br><br>" +
+        "Type <code>solution</code> or <code>show code</code> to see the full answer.");
+      state.loading = false; $send.disabled = false; return;
+    }
+    newHintLevel    = state.hintLevel + 1;
+    state.hintLevel = newHintLevel;
+    question        = state.currentQ;
+    updateHintDots();
+    $topSub.textContent = `Hint ${newHintLevel}/5 · ${state.pattern || "…"}`;
+  }
+
+  // ── Solved → next question ──
+  if (intent === "solved") {
+    const next = state.qIndex + 1;
+    state.hintLevel = 0;
+    updateHintDots();
+    updatePattern("");
+
+    if (state.questions.length === 0 || next >= state.questions.length) {
+      addMsg("bot",
+        "🎉 <strong>All questions solved!</strong> Incredible work!<br><br>" +
+        "Upload a new set or type <code>recommend</code> for a fresh challenge.");
+      state.loading = false; $send.disabled = false; return;
+    }
+
+    state.qIndex   = next;
+    const nextQ    = state.questions[next];
+    state.currentQ = nextQ;
+    renderQList();
+    updateProgress();
+
+    showTyping();
+    try {
+      const { sys, usr } = buildPrompt("start", 1, nextQ, txt);
+      const ans = await callAPI(sys, usr);
+      hideTyping();
+
+      const pm = ans.match(/\*\*Pattern Detected:\*\*\s*(.+)/);
+      if (pm) updatePattern(pm[1].trim());
+      state.hintLevel = 1;
+      updateHintDots();
+      $topTitle.textContent = nextQ.substring(0, 52) + (nextQ.length > 52 ? "…" : "");
+      $topSub.textContent   = `Hint 1/5 · ${state.pattern || "…"}`;
+
+      addMsg("bot",
+        `✅ <strong>Next Problem (${next + 1}/${state.questions.length})</strong><br><br>` +
+        `${nextQ}<hr>${md(ans)}`
+      );
+    } catch (e) {
+      hideTyping();
+      addMsg("bot", "❌ API error: " + e.message);
+    }
+    state.loading = false; $send.disabled = false; return;
+  }
+
+  // ── All other intents (start / hint / solution / code / normal) ──
+  showTyping();
+  try {
+    const { sys, usr } = buildPrompt(intent, newHintLevel, question, txt);
+    const ans = await callAPI(sys, usr);
+    hideTyping();
+
+    if (intent === "start") {
+      const pm = ans.match(/\*\*Pattern Detected:\*\*\s*(.+)/);
+      if (pm) {
+        updatePattern(pm[1].trim());
+        $topSub.textContent = `Hint 1/5 · ${state.pattern}`;
+      }
+      addMsg("bot", md(ans));
+    } else if (intent === "hint") {
+      addMsg("bot", `<h3>Hint Level ${newHintLevel} / 5</h3>${md(ans)}`);
+    } else if (intent === "solution") {
+      addMsg("bot", `<h3>Full Solution</h3>${md(ans)}`);
+    } else if (intent === "code") {
+      addMsg("bot", `<h3>Code Review</h3>${md(ans)}`);
+    } else {
+      addMsg("bot", md(ans));
+    }
+  } catch (e) {
+    hideTyping();
+    addMsg("bot", "❌ API error: " + e.message);
+  }
+
+  state.loading = false;
+  $send.disabled = false;
+}
+
+// ══════════════════════════════════════════
+//  FILE UPLOAD
+// ══════════════════════════════════════════
+document.getElementById("upload-btn").onclick = () =>
+  document.getElementById("file-inp").click();
+
+document.getElementById("file-inp").onchange = async (e) => {
+
+  const file = e.target.files?.[0];
+
+  if (!file) return;
+
+  const formData = new FormData();
+
+  formData.append(
+    "file",
+    file
+  );
+
+  try {
+
+    const response = await fetch(
+
+      `${BACKEND_URL}/upload`,
+
+      {
+        method: "POST",
+
+        body: formData
+      }
+    );
+
+    const data = await response.json();
+
+    if (!data.questions || data.questions.length === 0) {
+
+      addMsg(
+        "bot",
+
+        "⚠️ No questions detected."
+      );
+
+      return;
+    }
+
+    state.questions = data.questions;
+
+    state.qIndex = 0;
+
+    state.currentQ = null;
+
+    state.hintLevel = 0;
+
+    updateHintDots();
+
+    updatePattern("");
+
+    renderQList();
+
+    updateProgress();
+
+    addMsg(
+
+      "bot",
+
+      `✅ <strong>${data.count} questions loaded</strong> from <code>${file.name}</code><br><br>` +
+
+      `Type <strong>go raiz</strong> to start with Question 1!`
+    );
+
+  } catch (err) {
+
+    addMsg(
+      "bot",
+
+      `❌ Upload failed: ${err}`
+    );
+  }
+
+  e.target.value = "";
+};
+// ══════════════════════════════════════════
+//  CLEAR MEMORY
+// ══════════════════════════════════════════
+document.getElementById("clear-btn").onclick = () => {
+  state.hintLevel = 0; state.currentQ = null;
+  state.questions = []; state.qIndex  = 0;
+
+  updateHintDots();
+  updatePattern("");
+  renderQList();
+  updateProgress();
+
+  $topTitle.textContent = "Raiz AI Mentor";
+  $topSub.textContent   = "Ready — type \"go raiz [problem]\" to begin";
+
+  $msgs.innerHTML = "";
+  addMsg("bot", "Memory cleared ✓ — Ready for a fresh session!");
+};
+
+// ══════════════════════════════════════════
+//  SIDEBAR TOGGLE
+// ══════════════════════════════════════════
+document.getElementById("menu-btn").onclick = () =>
+  $sidebar.classList.toggle("collapsed");
+
+// ══════════════════════════════════════════
+//  QUICK ACTION BUTTONS
+// ══════════════════════════════════════════
+document.querySelectorAll(".qa-btn").forEach(btn => {
+  btn.onclick = () => {
+    $input.value   = btn.dataset.cmd;
+    $send.disabled = false;
+    $input.focus();
+  };
+});
+
+// ══════════════════════════════════════════
+//  INPUT EVENTS
+// ══════════════════════════════════════════
+$input.addEventListener("input", () => {
+  $input.style.height = "auto";
+  $input.style.height = Math.min($input.scrollHeight, 130) + "px";
+  $send.disabled = !$input.value.trim() || state.loading;
+});
+
+$input.addEventListener("keydown", e => {
+  if (e.key === "Enter" && !e.shiftKey) {
+    e.preventDefault();
+    handleSend();
+  }
+});
+
+$send.onclick = handleSend;
+</script>
+</body>
+</html>

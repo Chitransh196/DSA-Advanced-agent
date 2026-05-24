@@ -1,66 +1,69 @@
-# import os
-# from dotenv import load_dotenv
-# from huggingface_hub import InferenceClient
-
-# load_dotenv()
-
-# HF_TOKEN = os.getenv("HF_TOKEN")
-
-# client = InferenceClient(api_key=HF_TOKEN)
-
-# MODEL_NAME = "Qwen/Qwen2.5-7B-Instruct"
-
-
-# def call_llm(prompt: str) -> str:
-#     try:
-#         response = client.chat.completions.create(
-#             model=MODEL_NAME,
-#             messages=[
-#                 {"role": "system", "content": "You are a helpful DSA tutor."},
-#                 {"role": "user", "content": prompt},
-#             ],
-#             max_tokens=300,
-#             temperature=0.3,
-#         )
-#         return response.choices[0].message.content.strip()
-#     except Exception as e:
-#         return f"❌ Error: {e}"
-
 import os
 import requests
+from dotenv import load_dotenv
 
-GROQ_API_KEY = os.getenv("GROQ_API_KEY")
+load_dotenv()
 
-if not GROQ_API_KEY:
-    raise ValueError("GROQ_API_KEY not found!")
+GROQ_API_KEY = os.getenv(
+    "GROQ_API_KEY"
+)
 
-API_URL = "https://api.groq.com/openai/v1/chat/completions"
+API_URL = (
+    "https://api.groq.com/openai/v1/chat/completions"
+)
 
 headers = {
-    "Authorization": f"Bearer {GROQ_API_KEY}",
-    "Content-Type": "application/json"
+
+    "Authorization":
+        f"Bearer {GROQ_API_KEY}",
+
+    "Content-Type":
+        "application/json"
 }
 
 
-def call_llm(prompt: str) -> str:
+def call_llm(prompt):
+
+    payload = {
+
+        "model":
+            "llama-3.1-8b-instant",
+
+        "messages": [
+
+            {
+                "role": "user",
+
+                "content": prompt
+            }
+        ],
+
+        "temperature": 0.3,
+
+        "max_tokens": 800
+    }
+
+    response = requests.post(
+
+        API_URL,
+
+        headers=headers,
+
+        json=payload
+    )
+
+    data = response.json()
+
     try:
-        payload = {
-            "model": "llama-3.1-8b-instant",  # ✅ UPDATED MODEL
-            "messages": [
-                {"role": "user", "content": prompt}
-            ],
-            "temperature": 0.3,
-            "max_tokens": 300
-        }
 
-        response = requests.post(API_URL, headers=headers, json=payload)
+        return data[
+            "choices"
+        ][0][
+            "message"
+        ][
+            "content"
+        ]
 
-        data = response.json()
+    except Exception:
 
-        if "choices" in data:
-            return data["choices"][0]["message"]["content"]
-
-        return f"❌ Unexpected response: {data}"
-
-    except Exception as e:
-        return f"❌ Error: {e}"
+        return f"❌ LLM Error: {data}"

@@ -1,5 +1,9 @@
-streamlit
-huggingface_hub==0.23.0
+fastapi
+uvicorn
+python-multipart
+requests
 python-dotenv
+pypdf
 faiss-cpu
 langchain
+huggingface_hub==0.23.0

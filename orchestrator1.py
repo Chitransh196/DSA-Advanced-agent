@@ -1,117 +1,516 @@
+# from llm_client import call_llm
+# from code_executor1 import run_code
+# from problem_recommender1 import recommend_problem
+# from retriever1 import retrieve_context
+# from conversation_memory1 import save_memory, get_memory
+# from pattern_detector1 import detect_pattern
+# from hint_engine import get_hint_prompt
+
+
+# def run_agent(
+#     user_input,
+#     session_data
+# ):
+
+#     text = user_input.lower().strip()
+
+#     # ======================================
+#     # SESSION INIT
+#     # ======================================
+
+#     if "questions" not in session_data:
+#         session_data["questions"] = []
+
+#     if "current_question" not in session_data:
+#         session_data["current_question"] = 0
+
+#     if "hint_level" not in session_data:
+#         session_data["hint_level"] = 0
+
+#     if "manual_question" not in session_data:
+#         session_data["manual_question"] = ""
+
+#     if "active_question" not in session_data:
+#         session_data["active_question"] = ""
+
+#     if "current_pattern" not in session_data:
+#         session_data["current_pattern"] = ""
+    
+#     if "awaiting_question" not in session_data:
+#         session_data["awaiting_question"] = False
+
+#     # ======================================
+#     # CODE REVIEW
+#     # ======================================
+
+#     if "```" in user_input:
+
+#         return run_code(user_input)
+
+#     # ======================================
+#     # RECOMMEND
+#     # ======================================
+
+#     if "recommend" in text:
+
+#         return recommend_problem()
+
+#     # ======================================
+#     # START RAIZ
+#     # ======================================
+
+#     if "go raiz" in text:
+
+#         # RESET
+#         session_data["hint_level"] = 1
+
+#         # ======================================
+#         # QUESTION FROM FILE
+#         # ======================================
+
+#         if session_data["questions"]:
+
+#             question = session_data[
+#                 "questions"
+#             ][
+#                 session_data[
+#                     "current_question"
+#                 ]
+#             ]
+
+#         # ======================================
+#         # MANUAL QUESTION
+#         # ======================================
+
+#         else:
+
+#             question = user_input.replace(
+#                 "go raiz",
+#                 ""
+#             ).strip()
+
+#             if not question:
+
+#                 return """
+# ⚠️ No question found.
+
+# Usage:
+
+# go raiz <paste question>
+
+# OR upload a txt/pdf file first.
+# """
+
+#             session_data[
+#                 "manual_question"
+#             ] = question
+
+#         # SAVE ACTIVE QUESTION
+#         session_data[
+#             "active_question"
+#         ] = question
+
+#         # DETECT PATTERN
+#         pattern = detect_pattern(
+#             question
+#         )
+
+#         session_data[
+#             "current_pattern"
+#         ] = pattern
+
+#         # HINT LEVEL 1
+#         prompt = get_hint_prompt(
+#             question,
+#             1
+#         )
+
+#         answer = call_llm(prompt)
+
+#         return f"""
+# # 🧩 Problem Started
+
+# ## Hint Level: 1/5
+
+# {answer}
+# """
+
+#     # ======================================
+#     # NEXT HINT
+#     # ======================================
+
+#     if any(x in text for x in [
+#         "hint",
+#         "next",
+#         "more"
+#     ]):
+
+#         if not session_data[
+#             "active_question"
+#         ]:
+
+#             return """
+# ⚠️ No active problem.
+
+# Start with:
+# go raiz <question>
+
+# OR upload a file first.
+# """
+
+#         # LIMIT
+#         if session_data[
+#             "hint_level"
+#         ] >= 5:
+
+#             return """
+# ✅ Maximum hint level reached.
+
+# Now ask:
+# - show code
+# - solution
+# """
+
+#         # NEXT LEVEL
+#         session_data[
+#             "hint_level"
+#         ] += 1
+
+#         level = session_data[
+#             "hint_level"
+#         ]
+
+#         question = session_data[
+#             "active_question"
+#         ]
+
+#         prompt = get_hint_prompt(
+#             question,
+#             level
+#         )
+
+#         answer = call_llm(prompt)
+
+#         return f"""
+# # 💡 Hint Level: {level}/5
+
+# {answer}
+# """
+
+#     # ======================================
+#     # FULL SOLUTION
+#     # ======================================
+
+#     if any(x in text for x in [
+#         "show code",
+#         "solution",
+#         "full code"
+#     ]):
+
+#         if not session_data[
+#             "active_question"
+#         ]:
+
+#             return """
+# ⚠️ No active problem.
+# """
+
+#         question = session_data[
+#             "active_question"
+#         ]
+
+#         context = retrieve_context(
+#             question
+#         )
+
+#         prompt = f"""
+# You are Raiz AI.
+
+# QUESTION:
+# {question}
+
+# REFERENCE:
+# {context}
+
+# Now provide:
+
+# 1. Optimal explanation
+# 2. Time complexity
+# 3. Space complexity
+# 4. Full Python solution
+# """
+
+#         return call_llm(prompt)
+
+#     # ======================================
+#     # SOLVED
+#     # ======================================
+
+#     if "solved" in text:
+
+#         session_data[
+#             "hint_level"
+#         ] = 0
+
+#         # ======================================
+#         # NEXT QUESTION
+#         # ======================================
+
+#         if session_data["questions"]:
+
+#             session_data[
+#                 "current_question"
+#             ] += 1
+
+#             if (
+#                 session_data[
+#                     "current_question"
+#                 ] >=
+#                 len(
+#                     session_data[
+#                         "questions"
+#                     ]
+#                 )
+#             ):
+
+#                 return """
+# 🎉 All questions solved!
+# """
+
+#             next_q = session_data[
+#                 "questions"
+#             ][
+#                 session_data[
+#                     "current_question"
+#                 ]
+#             ]
+
+#             session_data[
+#                 "active_question"
+#             ] = next_q
+
+#             session_data[
+#                 "hint_level"
+#             ] = 1
+
+#             pattern = detect_pattern(
+#                 next_q
+#             )
+
+#             session_data[
+#                 "current_pattern"
+#             ] = pattern
+
+#             prompt = get_hint_prompt(
+#                 next_q,
+#                 1
+#             )
+
+#             answer = call_llm(prompt)
+
+#             return f"""
+# # ✅ Next Problem
+
+# ## Hint Level: 1/5
+
+# {answer}
+# """
+
+#         return """
+# 🎉 Problem completed!
+# """
+
+#     # ======================================
+#     # NORMAL CHAT
+#     # ======================================
+
+#     memory = get_memory()
+
+#     history = "\n".join(
+#         [
+#             f"User: {m['user']}\nBot: {m['bot']}"
+#             for m in memory[-3:]
+#         ]
+#     )
+
+#     context = retrieve_context(
+#         user_input
+#     )
+
+#     prompt = f"""
+# You are Raiz AI DSA Mentor.
+
+# Conversation History:
+# {history}
+
+# REFERENCE:
+# {context}
+
+# QUESTION:
+# {user_input}
+
+# Rules:
+# - concise answer
+# - mentorship style
+# - avoid long explanations
+# """
+
+#     answer = call_llm(prompt)
+
+#     save_memory(
+#         user_input,
+#         answer
+#     )
+
+#     return answer
+
+
+
+
+
+
+
 from llm_client import call_llm
 from code_executor1 import run_code
 from problem_recommender1 import recommend_problem
 from retriever1 import retrieve_context
 from conversation_memory1 import save_memory, get_memory
-
-# ✅ NEW IMPORTS
-import streamlit as st
 from pattern_detector1 import detect_pattern
 from hint_engine import get_hint_prompt
 
 
-def detect_intent(user_input: str) -> str:
+def run_agent(
+    user_input,
+    session_data
+):
 
-    text = user_input.lower()
+    text = user_input.lower().strip()
+
+    # ======================================
+    # SESSION INIT
+    # ======================================
+
+    if "questions" not in session_data:
+        session_data["questions"] = []
+
+    if "current_question" not in session_data:
+        session_data["current_question"] = 0
+
+    if "hint_level" not in session_data:
+        session_data["hint_level"] = 0
+
+    if "manual_question" not in session_data:
+        session_data["manual_question"] = ""
+
+    if "active_question" not in session_data:
+        session_data["active_question"] = ""
+
+    if "current_pattern" not in session_data:
+        session_data["current_pattern"] = ""
+
+    if "awaiting_question" not in session_data:
+        session_data["awaiting_question"] = False
+
+    # ======================================
+    # CODE REVIEW
+    # ======================================
 
     if "```" in user_input:
-        return "code"
 
-    if "recommend" in text:
-        return "recommend"
-
-    # ✅ START FLOW
-    if "go raiz" in text:
-        return "start"
-
-    # ✅ NEXT HINT
-    if any(x in text for x in [
-        "next hint",
-        "more hint",
-        "next",
-        "hint"
-    ]):
-        return "hint"
-
-    # ✅ SOLVED
-    if "solved" in text:
-        return "solved"
-
-    # ✅ FULL SOLUTION
-    if any(x in text for x in [
-        "show code",
-        "solution",
-        "give code"
-    ]):
-        return "solution"
-
-    if any(x in text for x in [
-        "structure",
-        "format",
-        "pattern"
-    ]):
-        return "structured"
-
-    if any(x in text for x in [
-        "hi",
-        "hello",
-        "hey"
-    ]):
-        return "chat"
-
-    return "normal"
-
-
-def run_agent(user_input: str) -> str:
-
-    intent = detect_intent(user_input)
-
-    # 🔧 TOOL: Run code
-    if intent == "code":
         return run_code(user_input)
 
-    # 🎯 TOOL: Recommend problem
-    if intent == "recommend":
+    # ======================================
+    # RECOMMEND
+    # ======================================
+
+    if "recommend" in text:
+
         return recommend_problem()
 
-    # ✅ START LEARNING FLOW
-    if intent == "start":
+    # ======================================
+    # START RAIZ
+    # ======================================
 
-        st.session_state.hint_level = 1
+    if "go raiz" in text:
 
-        # ✅ UPLOADED QUESTIONS
-        if st.session_state.questions:
+        session_data["hint_level"] = 1
 
-            st.session_state.current_question = 0
+        manual_question = user_input.replace(
+            "go raiz",
+            ""
+        ).strip()
 
-            question = st.session_state.questions[
-                st.session_state.current_question
+        # ======================================
+        # USER DIRECTLY PASTED QUESTION
+        # ======================================
+
+        if manual_question:
+
+            question = manual_question
+
+            session_data[
+                "manual_question"
+            ] = question
+
+            session_data[
+                "active_question"
+            ] = question
+
+            session_data[
+                "awaiting_question"
+            ] = False
+
+        # ======================================
+        # QUESTION FROM UPLOADED FILE
+        # ======================================
+
+        elif session_data["questions"]:
+
+            question = session_data[
+                "questions"
+            ][
+                session_data[
+                    "current_question"
+                ]
             ]
 
-        # ✅ MANUAL QUESTION
+            session_data[
+                "active_question"
+            ] = question
+
+            session_data[
+                "awaiting_question"
+            ] = False
+
+        # ======================================
+        # ASK USER FOR QUESTION
+        # ======================================
+
         else:
 
-            question = user_input.replace(
-                "go raiz",
-                ""
-            ).strip()
+            session_data[
+                "awaiting_question"
+            ] = True
 
-            if not question:
-
-                return """
-⚠️ No question found.
-
-Either:
-- upload PDF/TXT
-OR
-- paste question with Go Raiz
+            return """
+🧩 Paste your DSA problem now.
 """
 
-            st.session_state.manual_question = question
+        # ======================================
+        # DETECT PATTERN
+        # ======================================
 
-        pattern = detect_pattern(question)
+        pattern = detect_pattern(
+            question
+        )
 
-        st.session_state.current_pattern = pattern
+        session_data[
+            "current_pattern"
+        ] = pattern
+
+        # ======================================
+        # LEVEL 1 HINT
+        # ======================================
 
         prompt = get_hint_prompt(
             question,
@@ -121,45 +520,119 @@ OR
         answer = call_llm(prompt)
 
         return f"""
-# 🧩 Problem
+# 🧩 Problem Started
 
-{question}
-
----
-
-# 💡 Hint Level 1
+## Hint Level: 1/5
 
 {answer}
 """
 
-    # ✅ NEXT HINT
-    if intent == "hint":
+    # ======================================
+    # CAPTURE NEXT MESSAGE AS QUESTION
+    # ======================================
 
-        # ✅ UPLOAD MODE
-        if st.session_state.questions:
+    if session_data[
+        "awaiting_question"
+    ]:
 
-            question = st.session_state.questions[
-                st.session_state.current_question
-            ]
+        question = user_input.strip()
 
-        # ✅ MANUAL MODE
-        else:
+        session_data[
+            "manual_question"
+        ] = question
 
-            question = st.session_state.manual_question
+        session_data[
+            "active_question"
+        ] = question
 
-        st.session_state.hint_level += 1
+        session_data[
+            "hint_level"
+        ] = 1
 
-        level = st.session_state.hint_level
+        session_data[
+            "awaiting_question"
+        ] = False
 
-        if level > 5:
+        pattern = detect_pattern(
+            question
+        )
+
+        session_data[
+            "current_pattern"
+        ] = pattern
+
+        prompt = get_hint_prompt(
+            question,
+            1
+        )
+
+        answer = call_llm(prompt)
+
+        return f"""
+# 🧩 Problem Started
+
+## Hint Level: 1/5
+
+{answer}
+"""
+
+    # ======================================
+    # NEXT HINT
+    # ======================================
+
+    if any(
+        x in text
+        for x in [
+            "hint",
+            "next",
+            "more"
+        ]
+    ):
+
+        if not session_data[
+            "active_question"
+        ]:
 
             return """
-✅ All hints unlocked.
+⚠️ No active problem.
+
+Start with:
+go raiz
+
+OR upload a file first.
+"""
+
+        # ======================================
+        # MAX LIMIT
+        # ======================================
+
+        if session_data[
+            "hint_level"
+        ] >= 5:
+
+            return """
+✅ Maximum hint level reached.
 
 Now ask:
 - show code
 - solution
 """
+
+        # ======================================
+        # NEXT LEVEL
+        # ======================================
+
+        session_data[
+            "hint_level"
+        ] += 1
+
+        level = session_data[
+            "hint_level"
+        ]
+
+        question = session_data[
+            "active_question"
+        ]
 
         prompt = get_hint_prompt(
             question,
@@ -169,168 +642,178 @@ Now ask:
         answer = call_llm(prompt)
 
         return f"""
-# 💡 Hint Level {level}
+# 💡 Hint Level: {level}/5
 
 {answer}
 """
 
-    # ✅ NEXT QUESTION
-    if intent == "solved":
+    # ======================================
+    # FULL SOLUTION
+    # ======================================
 
-        st.session_state.current_question += 1
+    if any(
+        x in text
+        for x in [
+            "show code",
+            "solution",
+            "full code"
+        ]
+    ):
 
-        st.session_state.hint_level = 1
+        if not session_data[
+            "active_question"
+        ]:
 
-        if (
-            st.session_state.current_question
-            >= len(st.session_state.questions)
-        ):
+            return """
+⚠️ No active problem.
+"""
 
-            return "🎉 You solved all uploaded questions!"
-
-        question = st.session_state.questions[
-            st.session_state.current_question
+        question = session_data[
+            "active_question"
         ]
 
-        pattern = detect_pattern(question)
-
-        st.session_state.current_pattern = pattern
-
-        prompt = get_hint_prompt(
-            question,
-            1
+        context = retrieve_context(
+            question
         )
 
-        answer = call_llm(prompt)
+        prompt = f"""
+You are Raiz AI.
 
-        return f"""
-# ✅ Next Problem
-
+QUESTION:
 {question}
 
----
+REFERENCE:
+{context}
 
-# 💡 Hint Level 1
+Provide:
+
+1. Optimal explanation
+2. Time complexity
+3. Space complexity
+4. Full Python solution
+"""
+
+        return call_llm(prompt)
+
+    # ======================================
+    # SOLVED
+    # ======================================
+
+    if "solved" in text:
+
+        session_data[
+            "hint_level"
+        ] = 0
+
+        # ======================================
+        # NEXT QUESTION
+        # ======================================
+
+        if session_data[
+            "questions"
+        ]:
+
+            session_data[
+                "current_question"
+            ] += 1
+
+            if (
+                session_data[
+                    "current_question"
+                ] >= len(
+                    session_data[
+                        "questions"
+                    ]
+                )
+            ):
+
+                return """
+🎉 All questions solved!
+"""
+
+            next_q = session_data[
+                "questions"
+            ][
+                session_data[
+                    "current_question"
+                ]
+            ]
+
+            session_data[
+                "active_question"
+            ] = next_q
+
+            session_data[
+                "hint_level"
+            ] = 1
+
+            pattern = detect_pattern(
+                next_q
+            )
+
+            session_data[
+                "current_pattern"
+            ] = pattern
+
+            prompt = get_hint_prompt(
+                next_q,
+                1
+            )
+
+            answer = call_llm(prompt)
+
+            return f"""
+# ✅ Next Problem
+
+## Hint Level: 1/5
 
 {answer}
 """
 
-    # ✅ FULL SOLUTION
-    if intent == "solution":
+        return """
+🎉 Problem completed!
+"""
 
-        # ✅ UPLOAD MODE
-        if st.session_state.questions:
+    # ======================================
+    # NORMAL CHAT
+    # ======================================
 
-            question = st.session_state.questions[
-                st.session_state.current_question
-            ]
+    memory = get_memory()
 
-        # ✅ MANUAL MODE
-        else:
+    history = "\n".join(
+        [
+            f"User: {m['user']}\nBot: {m['bot']}"
+            for m in memory[-3:]
+        ]
+    )
 
-            question = st.session_state.manual_question
+    context = retrieve_context(
+        user_input
+    )
 
-        context = retrieve_context(question)
+    prompt = f"""
+You are Raiz AI DSA Mentor.
 
-        prompt = f"""
-You are a DSA tutor.
+Conversation History:
+{history}
 
 REFERENCE:
 {context}
 
 QUESTION:
-{question}
-
-Give:
-1. Optimized explanation
-2. Time complexity
-3. Python code
-"""
-
-        return call_llm(prompt)
-
-    # 🧠 Memory
-    memory = get_memory()
-
-    history = "\n".join(
-        [f"User: {m['user']}\nBot: {m['bot']}" for m in memory[-3:]]
-    )
-
-    # 📚 Context
-    context = retrieve_context(user_input)
-
-    # 🧠 Dynamic Prompt
-    if intent == "chat":
-
-        prompt = f"""
-You are a friendly AI assistant.
-
-Conversation:
-{history}
-
-User:
 {user_input}
 
-Respond naturally like ChatGPT.
-"""
-
-    elif intent == "structured":
-
-        prompt = f"""
-You are a DSA tutor.
-
-Previous conversation:
-{history}
-
-Reference context:
-{context}
-
-User question:
-{user_input}
-
-Answer in this format:
-
-Possible interpretation:
-...
-
-Best pattern to use:
-...
-
-Why:
-...
-
-Hint:
-...
-
-Time complexity target:
-...
-"""
-
-    else:
-
-        prompt = f"""
-You are a helpful DSA tutor.
-
-Previous conversation:
-{history}
-
-Reference context:
-{context}
-
-User question:
-{user_input}
-
-Instructions:
-- Understand the user's intent.
-- Explain clearly and simply.
-- Give examples if needed.
-- Give code ONLY if user asks.
-
-Answer naturally.
+Rules:
+- concise answer
+- mentorship style
+- avoid long explanations
 """
 
     answer = call_llm(prompt)
 
-    save_memory(user_input, answer)
+    save_memory(
+        user_input,
+        answer
+    )
 
     return answer
